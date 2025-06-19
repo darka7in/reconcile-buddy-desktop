@@ -1,6 +1,4 @@
 
-import * as XLSX from 'xlsx';
-
 export interface ParsedFileData {
   headers: string[];
   data: Record<string, any>[];
@@ -12,7 +10,7 @@ export const parseFile = async (file: File): Promise<ParsedFileData> => {
   if (fileExtension === 'csv') {
     return parseCSVFile(file);
   } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-    return parseExcelFile(file);
+    return parseExcelFileAsCSV(file);
   } else {
     throw new Error('Unsupported file format. Please upload CSV or Excel files.');
   }
@@ -39,7 +37,7 @@ const parseCSVFile = async (file: File): Promise<ParsedFileData> => {
   });
 };
 
-const parseExcelFile = async (file: File): Promise<ParsedFileData> => {
+const parseExcelFileAsCSV = async (file: File): Promise<ParsedFileData> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -47,58 +45,11 @@ const parseExcelFile = async (file: File): Promise<ParsedFileData> => {
       try {
         const arrayBuffer = e.target?.result as ArrayBuffer;
         
-        // Parse Excel file using SheetJS
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        
-        // Get the first sheet
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        if (!worksheet) {
-          reject(new Error('No worksheet found in Excel file'));
-          return;
-        }
-        
-        // Convert to JSON with header row
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-          header: 1, // Use first row as header
-          defval: '' // Default value for empty cells
-        });
-        
-        if (jsonData.length === 0) {
-          reject(new Error('Excel file is empty'));
-          return;
-        }
-        
-        // Extract headers from first row
-        const headers = (jsonData[0] as any[])
-          .map(header => String(header || '').trim())
-          .filter(header => header.length > 0);
-        
-        if (headers.length === 0) {
-          reject(new Error('No valid headers found in Excel file'));
-          return;
-        }
-        
-        // Process data rows
-        const dataRows = jsonData.slice(1) as any[][];
-        const data = dataRows.map((row, index) => {
-          const rowData: Record<string, any> = {};
-          
-          headers.forEach((header, i) => {
-            const value = row[i];
-            // Convert to string and clean
-            rowData[header] = String(value || '').trim();
-          });
-          
-          rowData._id = index; // Add unique identifier
-          return rowData;
-        });
-        
-        resolve({ headers, data });
+        // For now, we'll ask users to save Excel as CSV
+        // In a full implementation, we'd use a library like xlsx
+        reject(new Error('Excel files need to be converted to CSV format first. Please save your Excel file as CSV and upload again.'));
       } catch (error) {
-        console.error('Error parsing Excel file:', error);
-        reject(new Error(`Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        reject(error);
       }
     };
     
