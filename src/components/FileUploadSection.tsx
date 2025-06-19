@@ -3,10 +3,11 @@ import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileText, Check, ArrowRight } from 'lucide-react';
+import { Upload, FileText, Check, ArrowRight, AlertCircle } from 'lucide-react';
 import { FileData } from '@/pages/Index';
 import { recognizeCommonFields } from '@/utils/fieldRecognition';
-import { parseCSVFile } from '@/utils/fileParser';
+import { parseFile } from '@/utils/fileParser';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FileUploadSectionProps {
   fileA: FileData | null;
@@ -23,9 +24,18 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   setFileB,
   onFilesReady
 }) => {
+  const [error, setError] = React.useState<string | null>(null);
+
   const handleFileUpload = useCallback(async (file: File, setFileData: (data: FileData | null) => void) => {
+    setError(null);
+    
     try {
-      const parsedData = await parseCSVFile(file);
+      console.log('Parsing file:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
+      const parsedData = await parseFile(file);
+      console.log('Parsed headers:', parsedData.headers);
+      console.log('First few rows:', parsedData.data.slice(0, 3));
+      
       const recognizedFields = recognizeCommonFields(parsedData.headers);
       
       const fileData: FileData = {
@@ -38,6 +48,8 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
       setFileData(fileData);
     } catch (error) {
       console.error('Error parsing file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Failed to parse ${file.name}: ${errorMessage}`);
     }
   }, []);
 
@@ -55,6 +67,10 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {file.data.length} rows, {file.headers.length} columns
                 </p>
+                <div className="text-xs text-slate-500 mt-1">
+                  Headers: {file.headers.slice(0, 3).join(', ')}
+                  {file.headers.length > 3 && '...'}
+                </div>
                 <div className="flex flex-wrap gap-1 mt-2 justify-center">
                   {Object.entries(file.recognizedFields).map(([header, fieldType]) => (
                     <Badge key={header} variant="secondary" className="text-xs">
@@ -82,10 +98,13 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Drop CSV file here or click to browse
                 </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Supported: CSV files (Excel files should be saved as CSV first)
+                </p>
               </div>
               <input
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".csv"
                 onChange={(e) => {
                   const selectedFile = e.target.files?.[0];
                   if (selectedFile) {
@@ -112,6 +131,15 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="grid md:grid-cols-2 gap-6">
         {createFileInput('File A (Reference)', fileA, setFileA)}
         {createFileInput('File B (Compare)', fileB, setFileB)}
