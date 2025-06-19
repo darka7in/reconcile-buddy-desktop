@@ -1,3 +1,4 @@
+
 export interface ParsedFileData {
   headers: string[];
   data: Record<string, any>[];
@@ -138,6 +139,3 @@ const parseCSVLine = (line: string): string[] => {
   result.push(current);
   return result;
 };
-
-// Keep the old function for backward compatibility
-export const parseCSVFile = parseCSVFile;
