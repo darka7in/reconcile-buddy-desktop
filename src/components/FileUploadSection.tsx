@@ -96,15 +96,15 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
               <div>
                 <h3 className="font-semibold text-slate-800 dark:text-slate-200">{label}</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Drop CSV file here or click to browse
+                  Drop CSV or Excel file here or click to browse
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Supported: CSV files (Excel files should be saved as CSV first)
+                  Supported: CSV, Excel (.xlsx, .xls) files
                 </p>
               </div>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={(e) => {
                   const selectedFile = e.target.files?.[0];
                   if (selectedFile) {
